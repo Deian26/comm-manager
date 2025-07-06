@@ -1,0 +1,242 @@
+﻿using Communication_Manager;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml;
+
+namespace Communication_Manager
+{
+    /// <summary>
+    /// Implements configuration and auxiliary methods.
+    /// </summary>
+    static class Utility
+    {
+        #region configuration
+        public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\";
+        
+        /// <summary>
+        /// Load protocol definition files from the specified folder.
+        /// </summary>
+        /// <param name="configFolderPath">configuration files folder</param>
+        public static void LoadProtocolDefinitions(string configFolderPath)
+        {
+            if (Directory.Exists(configFolderPath) == false) // invalid path
+            {
+                Logging.Log($"Invalid path to the configuration folder path: {configFolderPath}", Logging.Level.WARN);
+            }
+
+            try
+            {
+                // load the definitions in memory
+                XmlDocument defFile = new XmlDocument();
+
+                foreach (string filePath in Directory.EnumerateFiles(configFolderPath))
+                {
+                    defFile.Load(filePath);
+                    string description = null, interfaceType = null, resourceType = null;
+                    Frame frame = null;
+
+                    if (defFile.DocumentElement.Attributes["name"] == null)
+                    {
+                        Logging.Log($"The definition file '{filePath}' does not contain a protocol name!", Logging.Level.ERROR);
+                    }
+
+                    foreach (XmlNode node in defFile.DocumentElement.ChildNodes)
+                    {
+                        // extract details
+                        switch (node.Name)
+                        {
+                            case "description":
+                                {
+                                    description = node.InnerText;
+                                    break;
+                                }
+                            case "interface":
+                                {
+                                    if (node.Attributes["type"] == null)
+                                    {
+                                        Logging.Log($"Interface definition for protocol '{defFile.DocumentElement.Attributes["name"].Value}' is missing the mandatory attribute 'type' !", Logging.Level.ERROR);
+                                        continue; // skip node
+                                    }
+
+                                    if (node.Attributes["resource-type"] == null)
+                                    {
+                                        Logging.Log($"Interface definition for protocol '{defFile.DocumentElement.Attributes["name"].Value}' is missing the mandatory attribute 'resource-type' !", Logging.Level.ERROR);
+                                        continue; // skip node
+                                    }
+
+                                    interfaceType = node.Attributes["type"].Value;
+                                    resourceType = node.Attributes["resource-type"].Value;
+                                    break;
+                                }
+                            case "frame":
+                                {
+                                    if (node.Attributes["break-time-ns"] == null)
+                                    {
+                                        Logging.Log($"Frame definition for protocol '{defFile.DocumentElement.Attributes["name"].Value}' is missing the mandatory attribute 'break-time-ns' !", Logging.Level.ERROR);
+                                        continue; // skip node
+                                    }
+
+                                    // extract frame details and construct a Frame object from it
+                                    frame = new Frame();
+                                    frame.breakTimeNs = Double.Parse(node.Attributes["break-time-ns"].Value);
+
+                                    foreach(XmlNode field in node.ChildNodes)
+                                    {
+                                        if(field.Name.Equals("field") == true)
+                                        {
+                                            if (field.Attributes["name"] == null)
+                                            {
+                                                Logging.Log($"Invalid field definition! The definition of a field (general frame definition) is missing the mandatory 'name' attribute!", Logging.Level.ERROR);
+                                                continue; // skip node
+                                            }
+                                            if (field.Attributes["bit-size"] == null)
+                                            {
+                                                Logging.Log($"Invalid field definition! The definition of field '{field.Attributes["name"].Value}' is missing the mandatory 'bit-size' attribute!", Logging.Level.ERROR);
+                                                continue; // skip node
+                                            }
+
+
+                                            frame.Fields.Add(
+                                                field.Attributes["name"].Value, // key
+                                                new Frame.Field( // value
+                                                    field.Attributes["name"].Value, // field name
+                                                    Int32.Parse(field.Attributes["bit-size"].Value), // bit size (since eof = false)
+                                                    false // eof = false
+                                                    )
+                                                );
+                                        }
+                                        else if (field.Name.Equals("#comment") == true)
+                                        {
+                                            continue; // skip comment
+                                        }
+                                        else // unrecognized field definition node
+                                        {
+                                            Logging.Log($"Unrecognized field definition node: {field.Name}!", Logging.Level.WARN);
+                                            continue; // skip field node
+                                        }
+                                    }
+
+                                    break;
+                                }
+                            case "eof": // definition of an 'End of File' frame (marks the end of a transmission)
+                                {
+                                    foreach (XmlNode eofFrameSubnode in node.ChildNodes)
+                                    {
+                                        // extract frame details and construct a Frame object from it
+                                        frame = new Frame();
+                                        frame.eof = true;
+
+                                        switch (eofFrameSubnode.Name)
+                                        {
+                                            case "frame":
+                                            {
+                                                foreach (XmlNode field in eofFrameSubnode.ChildNodes)
+                                                {
+                                                    if (field.Name.Equals("field") == true)
+                                                    {
+                                                        if (field.Attributes["name"] == null)
+                                                        {
+                                                            Logging.Log($"Invalid field definition! The definition of a field is missing the mandatory 'name' attribute!", Logging.Level.ERROR);
+                                                            continue; // skip node
+                                                        }
+                                                        if (field.Attributes["value"] == null)
+                                                        {
+                                                            Logging.Log($"Invalid field definition! The definition of field '{field.Attributes["name"].Value}' (EoF frame) is missing the mandatory 'value' attribute!", Logging.Level.ERROR);
+                                                            continue; // skip node
+                                                        }
+
+
+                                                        frame.Fields.Add(
+                                                        field.Attributes["name"].Value, // key
+                                                        new Frame.Field( // value
+                                                            field.Attributes["name"].Value, // field name
+                                                            Int32.Parse(field.Attributes["value"].Value), // EoF frame field value (since eof = true)
+                                                            true // eof = true
+                                                            )
+                                                        );
+                                                    }
+                                                    else if (field.Name.Equals("#comment") == true)
+                                                    {
+                                                        continue; // skip comment
+                                                    }
+                                                    else // unrecognized field definition node
+                                                    {
+                                                        Logging.Log($"Unrecognized field definition node: {field.Name}!", Logging.Level.WARN);
+                                                        continue; // skip field
+                                                    }
+
+                                                }
+                                                    break;
+                                            }
+
+                                            case "timeout":
+                                                {
+                                                    if(eofFrameSubnode.Attributes["timeout-ns"] == null)
+                                                    {
+                                                        Logging.Log($"The EoF frame definition 'timeout' sub-node is missing the mandatory 'timeout-ns' attribute!", Logging.Level.ERROR);
+                                                        continue; // skip node
+                                                    }
+
+                                                    frame.eofTimeoutNs = Double.Parse(eofFrameSubnode.Attributes["timeout-ns"].Value);
+                                                    break;
+                                                }
+
+                                            case "#comment":
+                                                {
+                                                    continue; // skip comment
+                                                }
+                                            default:
+                                                {
+                                                    Logging.Log($"Unrecognized node for an EoF sub-node definition: {eofFrameSubnode.Name}", Logging.Level.ERROR);
+                                                    break;
+                                                }
+                                        }
+                                    
+                                    
+                                        
+                                    }
+                                        
+                                    
+
+                                    break;
+                                }
+                            case "#comment": // XML comment
+                                {
+                                    continue;// ignore the comment
+                                }
+
+                            default: // unrecognized node
+                                {
+                                    Logging.Log($"Unrecognized communication definition item: {node.Name}", Logging.Level.WARN);
+                                    break;
+                                }
+                        }
+                    }
+                    
+                    // store protocol details
+                    SerialCommunication.Protocols.Add(
+                        defFile.DocumentElement.Attributes["name"].Value, // key
+                        new Protocol( // value
+                            defFile.DocumentElement.Attributes["name"].Value, // protocol name
+                            description, // protocol description
+                            frame, // frame definition
+                            interfaceType, // e.g., Serial
+                            resourceType // e.g., COM
+                            )
+                        );
+
+                }
+            }
+            catch(Exception ex)
+            {
+                Logging.Log($"Error loading configuration from file! Details: {ex.Message}", Logging.Level.ERROR);
+            }
+        }
+        #endregion
+    }
+}

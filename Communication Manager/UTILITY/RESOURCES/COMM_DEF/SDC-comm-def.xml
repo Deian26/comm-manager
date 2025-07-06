@@ -1,0 +1,57 @@
+<comm-def name="SDC">
+    <description>
+Serial Device Communication
+Protocol defined for communication with an IoT device. 
+The device must support the protocol.
+    </description>
+
+    <interface type="Serial" resource-type="COM"/> <!-- **resource-type** must be one of the supported ports; currently only **COM** is planned-->
+    
+    <frame break-time-ns="100"> <!-- format of the packet to be sent/received; each sub-node defines a field from the frame, in the order it must be found in the actual frame; **break-time** specifies how many ns to wait after sending a frame (int)-->
+        <!--
+		SDC frame format:
+		
+		   ID	       MetaData	       Length	               Data
+		[1 byte]       [1 byte]	      [2 bytes]	      [max 6536 (0xFF FF) bytes]
+		
+		
+		The 'MetaData' field contains the following values:
+			Flags:
+				Bit 7 : EoF (1 if the current frame is en EoF frame)
+				Bit 6 : StartMultiFrameData (1 if this is the first frame from a multi-frame transmission; must be set to 0 starting with the second frame)
+				Bit 5 : MultiFrameData (1 if the current frame is part of a multi-frame transmission, but not the first sent frame)
+				Bit 4 : DiscardData (if 1, the data in the last frame shall be discarded; if this is sent during or after a multi-frame transmission, the entire multi-frame data shall be discared by the receiver)
+				Bit 3 : Priority (if 1, the current frame is of high importance; the receiver shall implement application-specific behaviour for this flag)
+			
+			Parity:
+				Bit 2 : DataParity (1 = odd, 0 = even number of '1' bits in Data)
+			
+			Bit 1 : Reserved
+			Bit 0 : Reserved
+			
+		Any transmission ends when a frame with:
+			ID = 0xFF
+			MetaData = 0x80 (bit 7 = 1, bits 0-6 = 0)
+			Length = 0x00
+			[no Data field sent]
+		is detected.
+		-->
+		
+		<field name="ID" bit-size="8"/> <!-- the bit size specifies how many bits this field occupies, from left to right -->
+        <field name="MetaData" bit-size="8"/>
+        <field name="Length" bit-size="16"/>
+		<field name="Data" bit-size="6536"/> <!-- max size = 6536 bits -->
+    </frame>
+
+    <eof>
+        <frame> <!-- **OPTIONAL** if this node is present, it specified the name of the fields from the frame format, and its value, that marks the end of transmission -->
+			<!-- all fields defined in the sub-nodes must be present, in the order they are present here, in a received frame for it to be considered an EoF frame-->
+			<field name="ID" value="255"/>
+			<field name="MetaData" value="128"/>
+			<field name="Length" value="0"/>
+			<!-- no Data field should be sent with the EoF frame -->
+		</frame>
+		
+		<timeout timeout-ns="500"/> <!-- the time, in ns, to wait before the connection times out -->
+    </eof>
+</comm-def>
