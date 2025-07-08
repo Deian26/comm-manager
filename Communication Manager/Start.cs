@@ -7,6 +7,9 @@ namespace Communication_Manager
         /// <summary>
         ///  The main entry point for the application.
         /// </summary>
+
+        public static F1_CommunicationMainForm f1_CommMainForm = new F1_CommunicationMainForm();
+
         [STAThread]
         static void Main()
         {

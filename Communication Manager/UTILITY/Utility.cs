@@ -17,12 +17,14 @@ namespace Communication_Manager
     {
         #region configuration
         public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\";
-        
+        public const string HEX_DIGTIS = "0123456789ABCDEF";
+
         /// <summary>
         /// Load protocol definition files from the specified folder.
         /// </summary>
         /// <param name="configFolderPath">configuration files folder</param>
-        public static void LoadProtocolDefinitions(string configFolderPath)
+        /// <param name="eventLog">ListBox where the names of the files being loaded should be displayed in real-time</param>
+        public static void LoadProtocolDefinitions(string configFolderPath, ListBox eventLog)
         {
             if (Directory.Exists(configFolderPath) == false) // invalid path
             {
@@ -33,9 +35,11 @@ namespace Communication_Manager
             {
                 // load the definitions in memory
                 XmlDocument defFile = new XmlDocument();
+                eventLog.Items.Add($"Config folder: {Path.GetFullPath(configFolderPath)}");
 
                 foreach (string filePath in Directory.EnumerateFiles(configFolderPath))
                 {
+                    eventLog.Items.Add($"Loading {Path.GetFileName(filePath)}..."); // log file being loaded
                     defFile.Load(filePath);
                     string description = null, interfaceType = null, resourceType = null;
                     Frame frame = null;
@@ -234,9 +238,20 @@ namespace Communication_Manager
             }
             catch(Exception ex)
             {
+                eventLog.Items.Add($"Error loading configuration files! Check the error log!"); // log file being loaded
                 Logging.Log($"Error loading configuration from file! Details: {ex.Message}", Logging.Level.ERROR);
             }
         }
+        
+        /// <summary>
+        /// Detects the available resources on the current machine and stores data about them in memory.
+        /// </summary>
+        public static void DetectAndLoadResources()
+        {
+            //TODO: Implement hardware resource detection
+            //SerialCommunication.HardwareResources.Add();
+        }
+        
         #endregion
     }
 }
