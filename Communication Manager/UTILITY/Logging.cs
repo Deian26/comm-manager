@@ -13,6 +13,12 @@ namespace Communication_Manager
     static class Logging
     {
         static string LOG_FILE = @$"{Directory.GetCurrentDirectory()}\..\..\..\ARTIFACTS\LOGS\log.log";
+
+        // serial communication logging
+        public static DateTime SERIAL_COMM_LOG_START_TS = DateTime.UnixEpoch; // the starting timestamp for a serial communication log
+        public static string SERIAL_COMM_LOG = @$"{Directory.GetCurrentDirectory()}\..\..\..\ARTIFACTS\LOGS\serial--{Logging.SERIAL_COMM_LOG_START_TS}.log"; // current serial communication log, which starts when the associated
+                                                                                                                   // checkbox (F1) is 'checked' and stops when it is unchecked
+                                                                                                                  // (the filename will also contain the start timestamp)
         public enum Level { INFO = 0, WARN, ERROR, DEBUG };
 
         /// <summary>
@@ -33,6 +39,28 @@ namespace Communication_Manager
         {
             // print the message to the log file set in 'Logging.LOG_FILE'
             File.AppendAllText(Logging.LOG_FILE, $"{DateTime.UtcNow.ToLocalTime()} > [{Enum.GetName(level)}] {message}\n");
+        }
+
+        /// <summary>
+        /// Logs the specified data to 'Logging.SERIAL_COMM_LOG'.
+        /// </summary>
+        /// <param name="data">raw bytes to be logged</param>
+        /// <param name="data">direction of the data (transmitted or received by the application</param>
+        public static void LogData(byte[] data, SerialCommunication.Direction direction)
+        {
+            string hexString = $"{Convert.ToHexString(data)}";
+            string formattedHexString = "";
+
+            // format data to be more readable
+            for(int index = 0; index < hexString.Length; index+=2)
+            {
+                formattedHexString += $"{hexString[index]}{hexString[index+1]} ";
+            }
+
+            formattedHexString = $"0x{formattedHexString}"; 
+
+            // timestamps are in milliseconds
+            File.AppendAllText(Logging.SERIAL_COMM_LOG, $"[{DateTime.Now.Subtract(Logging.SERIAL_COMM_LOG_START_TS).TotalMilliseconds}] [{SerialCommunication.DirectionStr[(int)direction]}] {formattedHexString}\n");
         }
     }
     
