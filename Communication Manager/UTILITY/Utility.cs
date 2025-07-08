@@ -1,11 +1,5 @@
-﻿using Communication_Manager;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
+using System.IO.Ports;
 using System.Xml;
 
 namespace Communication_Manager
@@ -16,6 +10,7 @@ namespace Communication_Manager
     static class Utility
     {
         #region configuration
+        public const int LOADING_FORM_APP_START_DELAY_MS = 2000; // ms to wait after initializing the application, before form F0 is hidden and form F1 is opened
         public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\";
         public const string HEX_DIGTIS = "0123456789ABCDEF";
 
@@ -242,14 +237,36 @@ namespace Communication_Manager
                 Logging.Log($"Error loading configuration from file! Details: {ex.Message}", Logging.Level.ERROR);
             }
         }
-        
+
         /// <summary>
-        /// Detects the available resources on the current machine and stores data about them in memory.
+        /// Detects the available resources on the current machine and adds defined simulated ones and stores data about them in memory.
         /// </summary>
-        public static void DetectAndLoadResources()
+        /// <param name="onlySimulatedResources">if 'true', hardware resources are not added/removed from the list</param>
+        public static void LoadResources(bool onlySimulatedResources)
         {
-            //TODO: Implement hardware resource detection
-            //SerialCommunication.HardwareResources.Add();
+            // reset resource list
+            SerialCommunication.Resources.Clear();
+
+            // add simulated resources (the number of simulated serial ports is stored in SerialCommunication.SIMULATED_PORT_COUNT)
+            string simPortName;
+            for (int simPortIndex = 0; simPortIndex < SerialCommunication.SIMULATED_PORT_COUNT; simPortIndex++)
+            {
+                simPortName = $"SIM-COM{simPortIndex}";
+                SerialCommunication.Resources.Add(simPortName, new SerialPort(simPortName));
+            }
+
+            if (onlySimulatedResources == false) // add hardware resources
+            {
+                // add hardware resources
+                string[] portNames = SerialPort.GetPortNames();
+                SerialPort port;
+
+                foreach (string portName in portNames)
+                {
+                    port = new SerialPort(portName); // settings like baud rate will be set later, from the GUI
+                    SerialCommunication.Resources.Add(portName, port);
+                }
+            }
         }
         
         #endregion
