@@ -94,6 +94,18 @@ namespace Communication_Manager
 
             return rawBytes;
         }
+        
+        /// <summary>
+        /// Log data into the F1 raw data list box.
+        /// </summary>
+        /// <param name="data">data to be logged</param>
+        /// <param name="direction">direction, with respect to the application (Tx by the app / Rx by the app ) </param>
+        private void logDataIntoView(byte[] data, SerialCommunication.Direction direction)
+        {
+            string dataLog = $"[{DateTime.Now.Subtract(Logging.START_SERIAL_COMM_TS_MS).TotalMilliseconds}] [{SerialCommunication.DirectionStr[(int)direction]}] {Utility.FormatHextString(data)}";
+            this.F1_listBox_RawData.Items.Add(dataLog);
+        }
+
         #endregion
 
 
@@ -112,6 +124,10 @@ namespace Communication_Manager
         /// <param name="e"></param>
         private void F1_button_SendPacket_Click(object sender, EventArgs e)
         {
+            // store starting timestamp
+            if(Logging.START_SERIAL_COMM_TS_MS == DateTime.UnixEpoch) // if the starting timestamp was not yet set, set it to the current timestamp 
+                Logging.START_SERIAL_COMM_TS_MS = DateTime.Now;
+
             // validate input (bytes)
             byte[] rawBytes = this.getBytesFromHexString(this.F1_textBox_RawDataToBeSent.Text);
 
@@ -140,6 +156,9 @@ namespace Communication_Manager
 
                     // send data
                     SerialCommunication.Write(rawBytes);
+
+                    // log data in the GUI
+                    this.logDataIntoView(rawBytes, SerialCommunication.Direction.Transmit); // log data into the GUI
 
                     // log data to Logging.SERIAL_COMM_LOG, if logging is enabled
                     if (this.F1_checkBox_LogTransmission.Checked == true)

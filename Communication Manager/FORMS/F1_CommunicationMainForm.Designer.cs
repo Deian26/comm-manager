@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             F1_comboBox_Protocols = new ComboBox();
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl = new TableLayoutPanel();
+            F1_checkBox_LogTransmission = new CheckBox();
             F1_label_ProtocolLabel = new Label();
             F1_label_ResourceLabel = new Label();
             F1_comboBox_Resources = new ComboBox();
@@ -45,7 +46,6 @@
             F1_textBox_RawDataToBeSent = new TextBox();
             F1_label_RawDataToBeSentLabel = new Label();
             F1_errorProvider_InputValidation = new ErrorProvider(components);
-            F1_checkBox_LogTransmission = new CheckBox();
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)F1_errorProvider_InputValidation).BeginInit();
             SuspendLayout();
@@ -83,6 +83,17 @@
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.RowStyles.Add(new RowStyle(SizeType.Percent, 54.0322571F));
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.Size = new Size(1711, 114);
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.TabIndex = 1;
+            // 
+            // F1_checkBox_LogTransmission
+            // 
+            F1_checkBox_LogTransmission.AutoSize = true;
+            F1_checkBox_LogTransmission.Location = new Point(849, 3);
+            F1_checkBox_LogTransmission.Name = "F1_checkBox_LogTransmission";
+            F1_checkBox_LogTransmission.Size = new Size(343, 44);
+            F1_checkBox_LogTransmission.TabIndex = 11;
+            F1_checkBox_LogTransmission.Text = "Log transmission";
+            F1_checkBox_LogTransmission.UseVisualStyleBackColor = true;
+            F1_checkBox_LogTransmission.CheckedChanged += F1_checkBox_LogTransmission_CheckedChanged;
             // 
             // F1_label_ProtocolLabel
             // 
@@ -208,17 +219,6 @@
             // F1_errorProvider_InputValidation
             // 
             F1_errorProvider_InputValidation.ContainerControl = this;
-            // 
-            // F1_checkBox_LogTransmission
-            // 
-            F1_checkBox_LogTransmission.AutoSize = true;
-            F1_checkBox_LogTransmission.Location = new Point(849, 3);
-            F1_checkBox_LogTransmission.Name = "F1_checkBox_LogTransmission";
-            F1_checkBox_LogTransmission.Size = new Size(343, 44);
-            F1_checkBox_LogTransmission.TabIndex = 11;
-            F1_checkBox_LogTransmission.Text = "Log transmission";
-            F1_checkBox_LogTransmission.UseVisualStyleBackColor = true;
-            F1_checkBox_LogTransmission.CheckedChanged += F1_checkBox_LogTransmission_CheckedChanged;
             // 
             // F1_CommunicationMainForm
             // 
