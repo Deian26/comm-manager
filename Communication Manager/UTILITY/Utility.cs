@@ -268,7 +268,27 @@ namespace Communication_Manager
                 }
             }
         }
-        
+        #endregion
+
+        #region formatting
+        /// <summary>
+        /// Formats the given byte array to be more readable.
+        /// </summary>
+        /// <param name="bytes">data to be formatted</param>
+        /// <returns>a hex-string with the '0x' prefix and bytes separated by a space</returns>
+        public static string FormatHextString(byte[] bytes)
+        {
+            string hexString = $"{Convert.ToHexString(bytes)}";
+            string formattedHexString = "";
+
+            // format data to be more readable
+            for (int index = 0; index < hexString.Length; index += 2)
+            {
+                formattedHexString += $"{hexString[index]}{hexString[index + 1]} ";
+            }
+
+            return $"0x{formattedHexString}";
+        }
         #endregion
     }
 }
