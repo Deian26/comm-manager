@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace Communication_Manager
 {
@@ -44,7 +39,7 @@ namespace Communication_Manager
         }
 
         /// <summary>
-        /// Logs the specified data to 'Logging.SERIAL_COMM_LOG'.
+        /// Logs the specified data (hex-string) to 'Logging.COMM_LOG'.
         /// </summary>
         /// <param name="data">raw bytes to be logged</param>
         /// <param name="data">direction of the data (transmitted or received by the application</param>

@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <Folder Include="ARTIFACTS\LOGS\" />
-    <Folder Include="UTILITY\RESOURCES\COMM_DEF\" />
   </ItemGroup>
 
   <ItemGroup>
