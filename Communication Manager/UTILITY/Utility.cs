@@ -1,5 +1,11 @@
-﻿using System.IO;
+﻿using System.Diagnostics.Tracing;
+using System.IO;
 using System.IO.Ports;
+using System.Numerics;
+using System.Printing;
+using System.Runtime;
+using System.Text;
+using System.Windows.Controls;
 using System.Xml;
 
 namespace Communication_Manager
@@ -11,15 +17,39 @@ namespace Communication_Manager
     {
         #region configuration
         public const int LOADING_FORM_APP_START_DELAY_MS = 2000; // ms to wait after initializing the application, before form F0 is hidden and form F1 is opened
-        public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\";
+        public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\"; // local configuration files folder path
         public const string HEX_DIGTIS = "0123456789ABCDEF";
+        #endregion
+
+        #region lookup-tables
+        private static Dictionary<byte, string> BYTE_TO_HEX_DIGIT_STR_TABLE = new Dictionary<byte, string>()
+        {
+            { 0x00, "0" },
+            { 0x01, "1" },
+            { 0x02, "2" },
+            { 0x03, "3" },
+            { 0x04, "4" },
+            { 0x05, "5" },
+            { 0x06, "6" },
+            { 0x07, "7" },
+            { 0x08, "8" },
+            { 0x09, "9" },
+            { 0x0A, "A" },
+            { 0x0B, "B" },
+            { 0x0C, "C" },
+            { 0x0D, "D" },
+            { 0x0E, "E" },
+            { 0x0F, "F" }
+        };
+
+        #endregion
 
         /// <summary>
         /// Load protocol definition files from the specified folder.
         /// </summary>
         /// <param name="configFolderPath">configuration files folder</param>
         /// <param name="eventLog">ListBox where the names of the files being loaded should be displayed in real-time</param>
-        public static void LoadProtocolDefinitions(string configFolderPath, ListBox eventLog)
+        public static void LoadProtocolDefinitions(string configFolderPath, System.Windows.Forms.ListBox eventLog)
         {
             if (Directory.Exists(configFolderPath) == false) // invalid path
             {
@@ -36,14 +66,19 @@ namespace Communication_Manager
                 {
                     eventLog.Items.Add($"Loading {Path.GetFileName(filePath)}..."); // log file being loaded
                     defFile.Load(filePath);
-                    string description = null, interfaceType = null, resourceType = null;
-                    Frame frame = null;
+                    string protocolName = null, description = null, interfaceType = null, resourceType = null, appIdField = null, appDataField = null;
+                    Frame frame = new Frame();
+                    Frame eofFrame = new Frame();
+                    Dictionary<string, string> interpretations = null;
+                    List<string> tempFieldNames = new List<string>(); // temporarily store field names for processing
 
                     if (defFile.DocumentElement.Attributes["name"] == null)
                     {
                         Logging.Log($"The definition file '{filePath}' does not contain a protocol name!", Logging.Level.ERROR);
                     }
-
+                    
+                    protocolName = defFile.DocumentElement.Attributes["name"].Value;
+                    
                     foreach (XmlNode node in defFile.DocumentElement.ChildNodes)
                     {
                         // extract details
@@ -81,31 +116,76 @@ namespace Communication_Manager
                                     }
 
                                     // extract frame details and construct a Frame object from it
-                                    frame = new Frame();
                                     frame.breakTimeNs = Double.Parse(node.Attributes["break-time-ns"].Value);
 
                                     foreach(XmlNode field in node.ChildNodes)
                                     {
                                         if(field.Name.Equals("field") == true)
                                         {
+                                            string relativeLengthFieldName = null; // the field that contains the length for this field (optional)
                                             if (field.Attributes["name"] == null)
                                             {
                                                 Logging.Log($"Invalid field definition! The definition of a field (general frame definition) is missing the mandatory 'name' attribute!", Logging.Level.ERROR);
                                                 continue; // skip node
                                             }
+
+                                            tempFieldNames.Add(field.Attributes["name"].Value); // temporarily store field name
+
                                             if (field.Attributes["bit-size"] == null)
                                             {
                                                 Logging.Log($"Invalid field definition! The definition of field '{field.Attributes["name"].Value}' is missing the mandatory 'bit-size' attribute!", Logging.Level.ERROR);
                                                 continue; // skip node
                                             }
+                                            if (field.Attributes["relative-length"] != null) // the length of this field is given by the field specified in this attribute
+                                            {
+                                                relativeLengthFieldName = field.Attributes["relative-length"].Value;
+                                                if (tempFieldNames.Contains(relativeLengthFieldName) == false) // invalid relative length field name
+                                                {
+                                                    Logging.Log($"Invalid relative length field name! The name of the field ('{relativeLengthFieldName}') that contains the length for field '{field.Attributes["name"].Value}' does not exist in the definition of this frame !", Logging.Level.ERROR);
+                                                    continue; // skip node
+                                                }
+                                            }
+                                            if (field.Attributes["appID"] != null)
+                                            {
+                                                if(field.Attributes["appID"].Value.ToUpper() == "TRUE") // this field contains the app ID (hex)
+                                                {
+                                                    appIdField = field.Attributes["name"].Value;
+                                                }
+                                            }
 
+                                            if (field.Attributes["appData"] != null)
+                                            {
+                                                if (field.Attributes["appData"].Value.ToUpper() == "TRUE") // this field contains the app ID (hex)
+                                                {
+                                                    appDataField = field.Attributes["name"].Value;
+                                                }
+                                            }
 
-                                            frame.Fields.Add(
+                                            // get interpretations
+                                            interpretations = new Dictionary<string, string>(); // format: {hex-value (without the '0x' prefix) : meaning (string)}
+                                            foreach (XmlNode interpretation in field.ChildNodes)
+                                            {
+                                                if (interpretation.Name.Equals("interpretation"))
+                                                {
+                                                    if (interpretation.Attributes["value"] != null && interpretation.Attributes["meaning"] != null)
+                                                    {
+                                                        interpretations.Add(interpretation.Attributes["value"].Value.Replace("0x", "").Replace(" ",""), interpretation.Attributes["meaning"].Value.ToString());
+                                                    }
+                                                    else // invalid definition
+                                                    {
+                                                        Logging.Log($"Invalid interpretation definition for field {field.Name} ! At least 1 of the interpretations is missing the 'value' or 'meaning' field!", Logging.Level.ERROR);
+                                                    }
+                                                }
+                                            }
+
+                                            frame.fields.Add(
                                                 field.Attributes["name"].Value, // key
                                                 new Frame.Field( // value
                                                     field.Attributes["name"].Value, // field name
                                                     Int32.Parse(field.Attributes["bit-size"].Value), // bit size (since eof = false)
-                                                    false // eof = false
+                                                    false, // eof = false
+                                                    relativeLengthFieldName,
+                                                    interpretations
                                                     )
                                                 );
                                         }
@@ -127,8 +207,7 @@ namespace Communication_Manager
                                     foreach (XmlNode eofFrameSubnode in node.ChildNodes)
                                     {
                                         // extract frame details and construct a Frame object from it
-                                        frame = new Frame();
-                                        frame.eof = true;
+                                        eofFrame.eof = true;
 
                                         switch (eofFrameSubnode.Name)
                                         {
@@ -143,19 +222,23 @@ namespace Communication_Manager
                                                             Logging.Log($"Invalid field definition! The definition of a field is missing the mandatory 'name' attribute!", Logging.Level.ERROR);
                                                             continue; // skip node
                                                         }
+                                                        
+                                                        tempFieldNames.Add(field.Attributes["name"].Value); // temporarily store field name
+                                                        
                                                         if (field.Attributes["value"] == null)
                                                         {
                                                             Logging.Log($"Invalid field definition! The definition of field '{field.Attributes["name"].Value}' (EoF frame) is missing the mandatory 'value' attribute!", Logging.Level.ERROR);
                                                             continue; // skip node
                                                         }
 
-
-                                                        frame.Fields.Add(
+                                                        eofFrame.fields.Add(
                                                         field.Attributes["name"].Value, // key
                                                         new Frame.Field( // value
                                                             field.Attributes["name"].Value, // field name
                                                             Int32.Parse(field.Attributes["value"].Value), // EoF frame field value (since eof = true)
-                                                            true // eof = true
+                                                            true, // eof = true
+                                                            null, // relative length field name (optional; not present for EoF frames)
+                                                            null // interpretation (none for EoF telegrams)
                                                             )
                                                         );
                                                     }
@@ -170,7 +253,7 @@ namespace Communication_Manager
                                                     }
 
                                                 }
-                                                    break;
+                                                break;
                                             }
 
                                             case "timeout":
@@ -181,7 +264,7 @@ namespace Communication_Manager
                                                         continue; // skip node
                                                     }
 
-                                                    frame.eofTimeoutNs = Double.Parse(eofFrameSubnode.Attributes["timeout-ns"].Value);
+                                                    eofFrame.eofTimeoutNs = Double.Parse(eofFrameSubnode.Attributes["timeout-ns"].Value);
                                                     break;
                                                 }
 
@@ -194,19 +277,64 @@ namespace Communication_Manager
                                                     Logging.Log($"Unrecognized node for an EoF sub-node definition: {eofFrameSubnode.Name}", Logging.Level.ERROR);
                                                     break;
                                                 }
-                                        }
-                                    
-                                    
-                                        
+                                        } 
                                     }
-                                        
-                                    
 
                                     break;
                                 }
                             case "#comment": // XML comment
                                 {
                                     continue;// ignore the comment
+                                }
+                            case "styles": // basic style options for the way the telegrams are formatted
+                                {
+                                    // create and store styles
+                                    SerialCommunication.ProtocolStyles.Clear(); // reset styles
+                                    
+                                    // create styles placeholder
+                                    SerialCommunication.ProtocolStyles.Add(
+                                        protocolName,
+                                        new Dictionary<SerialCommunication.Direction, DataGridViewCellStyle>()
+                                        );
+
+                                    foreach (XmlNode styleNode in node.ChildNodes)
+                                    {
+                                        if (styleNode.Name == "#comment") // skip comments
+                                            continue;
+                                        
+                                        if (styleNode.Attributes["background-colour"] == null || styleNode.Attributes["foreground-colour"] == null)
+                                        {
+                                            // missing stylistic attribute; skip node
+                                            Logging.Log($"Incomplete style definition at: {node.Name} (missing at least 1 stylistic attribute - e.g., background or foreground colour)", Logging.Level.ERROR);
+                                            continue;
+                                        }
+                                        DataGridViewCellStyle gridRowStyle = new DataGridViewCellStyle();
+                                        gridRowStyle.ForeColor = Color.FromName(styleNode.Attributes["foreground-colour"].Value);
+                                        gridRowStyle.BackColor = Color.FromName(styleNode.Attributes["background-colour"].Value);
+
+                                        if (styleNode.Name.Equals("tx")) // transmitted telegram (transmitted by the Communication Manager utility)
+                                        {
+                                            // associate the style with the direction of the telegram
+                                            SerialCommunication.ProtocolStyles[protocolName].Add(
+                                                SerialCommunication.Direction.Transmit,
+                                                gridRowStyle
+                                                );
+                                        }
+                                        else if (styleNode.Name.Equals("rx")) // received telegram
+                                        {
+                                            // associate the style with the direction of the telegram
+                                            SerialCommunication.ProtocolStyles[protocolName].Add(
+                                                SerialCommunication.Direction.Receive,
+                                                gridRowStyle
+                                                );
+                                        }
+                                        else // erroneous definition
+                                        {
+                                            Logging.Log($"Unrecognized telegram style definition for: {styleNode.Name} (unknown node name)", Logging.Level.ERROR);
+                                        }
+                                    }
+
+                                    break;
                                 }
 
                             default: // unrecognized node
@@ -224,8 +352,11 @@ namespace Communication_Manager
                             defFile.DocumentElement.Attributes["name"].Value, // protocol name
                             description, // protocol description
                             frame, // frame definition
+                            eofFrame, // EoF frame definition
                             interfaceType, // e.g., Serial
-                            resourceType // e.g., COM
+                            resourceType, // e.g., COM
+                            appIdField, // the name of the field that contains the app ID
+                            appDataField // the name of the field that contains the app data
                             )
                         );
 
@@ -246,6 +377,7 @@ namespace Communication_Manager
         {
             // reset resource list
             SerialCommunication.Resources.Clear();
+            string[] portsInUse = SerialPort.GetPortNames();
 
             // add simulated resources (the number of simulated serial ports is stored in SerialCommunication.SIMULATED_PORT_COUNT)
             string simPortName;
@@ -258,17 +390,69 @@ namespace Communication_Manager
             if (onlySimulatedResources == false) // add hardware resources
             {
                 // add hardware resources
-                string[] portNames = SerialPort.GetPortNames();
                 SerialPort port;
 
-                foreach (string portName in portNames)
+                foreach (string portName in portsInUse)
                 {
                     port = new SerialPort(portName); // settings like baud rate will be set later, from the GUI
                     SerialCommunication.Resources.Add(portName, port);
                 }
             }
         }
-        #endregion
+
+        /// <summary>
+        /// Convert a hex-string to a byte array
+        /// </summary>
+        /// <param name="hexString">string to be converted</param>
+        /// <returns>converted byte array</returns>
+        public static byte[] getBytesFromHexString(string hexString)
+        {
+            return Convert.FromHexString( hexString );
+        }
+
+
+        /// <summary>
+        /// Convert the given byte to a hex-string
+        /// </summary>
+        /// <param name="_byte">byte to be converted</param>
+        /// <returns>converted hex-string</returns>
+        public static string getHexString(byte _byte)
+        {
+            // create byte array
+            byte[] bytes = new byte[1] { _byte };
+
+            return Convert.ToHexString( bytes ).ToUpper();
+        }
+
+        /// <summary>
+        /// Converts the given byte array into a hex-string
+        /// </summary>
+        /// <param name="bytes">bytes to be converted</param>
+        /// <returns>hex-string</returns>
+        public static string getHexString(byte[] bytes)
+        {
+            return Convert.ToHexString( bytes ).ToUpper();
+        }
+
+        /// <summary>
+        /// Converts the given byte array into a hex-string including byte separators (spaces)
+        /// </summary>
+        /// <param name="bytes">bytes to be converted</param>
+        /// <returns>hex-string</returns>
+        public static string getFormattedHexString(byte[] bytes)
+        {
+            string formattedByteStr = "";
+
+            foreach(byte _byte in bytes)
+            {
+                formattedByteStr += $"{BYTE_TO_HEX_DIGIT_STR_TABLE[(byte)((_byte & 0xF0) >> 4)]}{BYTE_TO_HEX_DIGIT_STR_TABLE[(byte)(_byte & 0x0F)]} "; // get hex digit string
+            }
+
+            // delete last space
+            formattedByteStr.TrimEnd();
+
+            return formattedByteStr;
+        }
 
         #region formatting
         /// <summary>

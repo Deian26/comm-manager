@@ -39,7 +39,8 @@ namespace Communication_Manager
 
             // load hardware resources in memory
             this.F0_listBox_loadingEventLog.Items.Add("Load hardware resources ...");
-            Utility.LoadResources(false); //'false' => also add hardware resources 
+            Utility.LoadResources(false); //'false' => add both simulated and real resources
+            
 
             //==// Switch to the next form //==//
             // wait to smooth the transition

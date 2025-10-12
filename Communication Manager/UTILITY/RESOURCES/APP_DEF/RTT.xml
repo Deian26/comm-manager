@@ -1,0 +1,22 @@
+﻿<app name="RTT">
+	<desc>
+Real-Time Temperature App
+
+The application transmits real time temperature data and is able to execute
+basic commands, defined further.
+	</desc>
+
+
+	<!-- Protocol used; the sub-nodes must contain information required by the protocol (e.g., the App ID for BDT)-->
+	<protocol name="BDT">
+		<field appId="0x21"/>
+	</protocol>
+	
+	
+	<!-- Telegram -->
+	<telegram>
+		<field name="status" bitsize="8"/>
+		<field name="temperature" bitsize="32"/>
+	</telegram>
+	
+</app>

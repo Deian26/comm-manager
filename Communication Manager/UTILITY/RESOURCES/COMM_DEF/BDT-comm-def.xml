@@ -1,0 +1,59 @@
+<comm-def name="BDTP">
+    <description>
+Basic Data Transmission
+Protocol defined for low-throughput communication with an IoT device. 
+The device must support the protocol.
+    </description>
+
+    <interface type="Serial" resource-type="COM"/> <!-- **resource-type** must be one of the supported ports; currently only **COM** is planned-->
+    
+    <frame break-time-ns="100"> <!-- format of the packet to be sent/received; each sub-node defines a field from the frame, in the order it must be found in the actual frame; **break-time** specifies how many ns to wait after sending a frame (int)-->
+        <!--
+		BDT frame format:
+		
+		  Type	        Length					  Data
+		[1 byte]       [2 bytes]	     [max 255 (0xFF) bytes]
+		
+		Type:
+			b7 = Priority telegram flag
+			b6 = Command telegram flag
+			b5 - b0 = App ID
+		
+		Any transmission ends when a frame with:
+			Length = 0x00
+			[no Data field sent]
+		is detected (for any given 'Type' field)
+		
+		The following nodes must be written in the order they will appear in the telegram, left->right.
+		-->
+
+		<!-- Type field subfields -->
+		<!-- the bit size specifies how many bits this field occupies, from left to right; the sub-nodes of each 'field' node contains the interpretations for the field, if any -->
+		<field name="Priority telegram" bit-size="1"> 
+			<interpretation value="0x00" meaning="false"/>
+			<interpretation value="0x01" meaning="true"/>
+		</field>
+		
+		<field name="Command telegram" bit-size="1">
+			<interpretation value="0x00" meaning="false"/>
+			<interpretation value="0x01" meaning="true"/>
+		</field>
+		
+		<field name="App ID" bit-size="6" appID="true"/> <!-- 'appID=true' => this field contains the application ID -->
+
+		<!-- Following fields -->
+        <field name="Length" bit-size="8"/>
+		<field name="Data" bit-size="255" relative-length="Length" appData="true"/> <!-- max size in bits + length is determined by the 'Length' field; 'appData = true' => this field contains the data sent to / received by an application -->
+    </frame>
+
+    <eof>
+        <frame> <!-- **OPTIONAL** if this node is present, it specifies the name of the fields from the frame format, and its value, that marks the end of transmission -->
+			<!-- all fields defined in the sub-nodes must be present, in the order they are present here, in a received frame for it to be considered an EoF frame-->
+			<field name="Type" value="255"/>
+			<field name="Length" value="0"/>
+			<!-- no Data field should be sent with the EoF frame -->
+		</frame>
+		
+		<timeout timeout-ns="500"/> <!-- the time, in ns, to wait before the connection times out -->
+    </eof>
+</comm-def>
