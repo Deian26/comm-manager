@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO.Ports;
 using System.Runtime.Versioning;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Communication_Manager
 {
@@ -85,7 +86,7 @@ namespace Communication_Manager
             // validate input (bytes)
             errMsgs = ""; // no error (init)
             int writeErrCode = 0; // no error sending data
-            byte[] rawBytes = Utility.getBytesFromHexString(dataHexStr, out errMsgs);
+            byte[] rawBytes = Utility.getBytesFromHexString(dataHexStr);
 
             if (rawBytes.Length != 0) // valid hex-string
             {
@@ -102,12 +103,7 @@ namespace Communication_Manager
                     SerialCommunication.CrtPort = SerialCommunication.Resources[resource];
 
                     // if this is a simulated resource, remove the prefix
-                    if (SerialCommunication.CrtPort.PortName.StartsWith("SIM-") == true)
-                    {
-                        // simulate port
-                        //TODO: Implement simulated ports
-                    }
-                    else
+                    if (SerialCommunication.CrtPort.PortName.StartsWith("SIM-") == false)
                     { // real port
 
                         SerialCommunication.CrtPort.Open(); // open port

@@ -29,18 +29,21 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle17 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle18 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle19 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle20 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
             F1_comboBox_Protocols = new ComboBox();
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl = new TableLayoutPanel();
-            F1_checkBox_LogTransmission = new CheckBox();
+            F1_button_ResetConnectionToResource = new Button();
             F1_label_ProtocolLabel = new Label();
             F1_label_ResourceLabel = new Label();
-            F1_comboBox_Resources = new ComboBox();
             F1_label_BaudRate = new Label();
             F1_comboBox_BaudRate = new ComboBox();
+            F1_comboBox_Resources = new ComboBox();
+            F1_button_SearchBytes = new Button();
+            F1_textBox_SearchTextBox = new TextBox();
+            F1_checkBox_LogTransmission = new CheckBox();
             F1_checkBox_OnlySimulatedResources = new CheckBox();
             F1_button_SendPacket = new Button();
             F1_treeView_ProcessedData = new TreeView();
@@ -48,16 +51,15 @@
             F1_label_RawDataToBeSentLabel = new Label();
             F1_errorProvider_InputValidation = new ErrorProvider(components);
             F1_dataGridView_CommView = new DataGridView();
-            TimestampMs = new DataGridViewTextBoxColumn();
-            Direction = new DataGridViewTextBoxColumn();
-            Type = new DataGridViewTextBoxColumn();
-            Payload = new DataGridViewTextBoxColumn();
-            Protocol = new DataGridViewTextBoxColumn();
             F1_toolTip_ToolTip = new ToolTip(components);
             F1_errorProvider_BackgroundProcessError = new ErrorProvider(components);
             F1_timer_PeriodicUpdate = new System.Windows.Forms.Timer(components);
             F1_panel_ApplicationPanel = new Panel();
             F1_panel_RTT_ApplicationPanelOptions = new Panel();
+            F1_label_RTT_TemperatureUnitText = new Label();
+            F1_textBox_RTT_Temperature = new TextBox();
+            F1_label_RTT_TemperatureText = new Label();
+            label_F1_AppName = new Label();
             F1_checkBox_RTT_PriorityCmd = new CheckBox();
             F1_button_RTT_SendCommand = new Button();
             F1_panel_RTT_LockPanel = new Panel();
@@ -78,9 +80,11 @@
             F1_comboBox_RTT_RequestedCommand = new ComboBox();
             F1_label_RequestedAppNameLabel = new Label();
             F1_comboBox_RequestedAppName = new ComboBox();
-            F1_button_ResetConnectionToResource = new Button();
-            F1_button_SearchBytes = new Button();
-            F1_textBox_SearchTextBox = new TextBox();
+            TimestampMs = new DataGridViewTextBoxColumn();
+            Direction = new DataGridViewTextBoxColumn();
+            Type = new DataGridViewTextBoxColumn();
+            Payload = new DataGridViewTextBoxColumn();
+            Protocol = new DataGridViewTextBoxColumn();
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)F1_errorProvider_InputValidation).BeginInit();
             ((System.ComponentModel.ISupportInitialize)F1_dataGridView_CommView).BeginInit();
@@ -130,16 +134,17 @@
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.Size = new Size(2054, 169);
             F1_tableLayoutPanel_CommMainFormOptionsLayoutControl.TabIndex = 1;
             // 
-            // F1_checkBox_LogTransmission
+            // F1_button_ResetConnectionToResource
             // 
-            F1_checkBox_LogTransmission.AutoSize = true;
-            F1_checkBox_LogTransmission.Location = new Point(1340, 3);
-            F1_checkBox_LogTransmission.Name = "F1_checkBox_LogTransmission";
-            F1_checkBox_LogTransmission.Size = new Size(343, 44);
-            F1_checkBox_LogTransmission.TabIndex = 11;
-            F1_checkBox_LogTransmission.Text = "Log transmission";
-            F1_checkBox_LogTransmission.UseVisualStyleBackColor = true;
-            F1_checkBox_LogTransmission.CheckedChanged += F1_checkBox_LogTransmission_CheckedChanged;
+            F1_errorProvider_BackgroundProcessError.SetIconAlignment(F1_button_ResetConnectionToResource, ErrorIconAlignment.MiddleLeft);
+            F1_errorProvider_InputValidation.SetIconAlignment(F1_button_ResetConnectionToResource, ErrorIconAlignment.MiddleLeft);
+            F1_button_ResetConnectionToResource.Location = new Point(936, 80);
+            F1_button_ResetConnectionToResource.Name = "F1_button_ResetConnectionToResource";
+            F1_button_ResetConnectionToResource.Size = new Size(332, 49);
+            F1_button_ResetConnectionToResource.TabIndex = 13;
+            F1_button_ResetConnectionToResource.Text = "Reset Connection";
+            F1_button_ResetConnectionToResource.UseVisualStyleBackColor = true;
+            F1_button_ResetConnectionToResource.Click += F1_button_ResetConnectionToResource_Click;
             // 
             // F1_label_ProtocolLabel
             // 
@@ -161,15 +166,6 @@
             F1_label_ResourceLabel.TabIndex = 2;
             F1_label_ResourceLabel.Text = "Resource";
             // 
-            // F1_comboBox_Resources
-            // 
-            F1_comboBox_Resources.DropDownStyle = ComboBoxStyle.DropDownList;
-            F1_comboBox_Resources.FormattingEnabled = true;
-            F1_comboBox_Resources.Location = new Point(359, 80);
-            F1_comboBox_Resources.Name = "F1_comboBox_Resources";
-            F1_comboBox_Resources.Size = new Size(256, 48);
-            F1_comboBox_Resources.TabIndex = 3;
-            // 
             // F1_label_BaudRate
             // 
             F1_label_BaudRate.AutoSize = true;
@@ -189,6 +185,45 @@
             F1_comboBox_BaudRate.Name = "F1_comboBox_BaudRate";
             F1_comboBox_BaudRate.Size = new Size(204, 48);
             F1_comboBox_BaudRate.TabIndex = 8;
+            // 
+            // F1_comboBox_Resources
+            // 
+            F1_comboBox_Resources.DropDownStyle = ComboBoxStyle.DropDownList;
+            F1_comboBox_Resources.FormattingEnabled = true;
+            F1_comboBox_Resources.Location = new Point(359, 80);
+            F1_comboBox_Resources.Name = "F1_comboBox_Resources";
+            F1_comboBox_Resources.Size = new Size(256, 48);
+            F1_comboBox_Resources.TabIndex = 3;
+            F1_comboBox_Resources.SelectedIndexChanged += F1_comboBox_Resources_SelectedIndexChanged;
+            // 
+            // F1_button_SearchBytes
+            // 
+            F1_button_SearchBytes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            F1_button_SearchBytes.Location = new Point(1863, 3);
+            F1_button_SearchBytes.Name = "F1_button_SearchBytes";
+            F1_button_SearchBytes.Size = new Size(188, 54);
+            F1_button_SearchBytes.TabIndex = 6;
+            F1_button_SearchBytes.Text = "Search";
+            F1_button_SearchBytes.UseVisualStyleBackColor = true;
+            F1_button_SearchBytes.Click += F1_button_SearchBytes_Click;
+            // 
+            // F1_textBox_SearchTextBox
+            // 
+            F1_textBox_SearchTextBox.Location = new Point(1714, 80);
+            F1_textBox_SearchTextBox.Name = "F1_textBox_SearchTextBox";
+            F1_textBox_SearchTextBox.Size = new Size(333, 42);
+            F1_textBox_SearchTextBox.TabIndex = 6;
+            // 
+            // F1_checkBox_LogTransmission
+            // 
+            F1_checkBox_LogTransmission.AutoSize = true;
+            F1_checkBox_LogTransmission.Location = new Point(1340, 3);
+            F1_checkBox_LogTransmission.Name = "F1_checkBox_LogTransmission";
+            F1_checkBox_LogTransmission.Size = new Size(343, 44);
+            F1_checkBox_LogTransmission.TabIndex = 11;
+            F1_checkBox_LogTransmission.Text = "Log transmission";
+            F1_checkBox_LogTransmission.UseVisualStyleBackColor = true;
+            F1_checkBox_LogTransmission.CheckedChanged += F1_checkBox_LogTransmission_CheckedChanged;
             // 
             // F1_checkBox_OnlySimulatedResources
             // 
@@ -246,6 +281,7 @@
             F1_dataGridView_CommView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             F1_dataGridView_CommView.Columns.AddRange(new DataGridViewColumn[] { TimestampMs, Direction, Type, Payload, Protocol });
             F1_dataGridView_CommView.EditMode = DataGridViewEditMode.EditProgrammatically;
+            F1_dataGridView_CommView.ImeMode = ImeMode.NoControl;
             F1_dataGridView_CommView.Location = new Point(9, 285);
             F1_dataGridView_CommView.Name = "F1_dataGridView_CommView";
             F1_dataGridView_CommView.ReadOnly = true;
@@ -257,70 +293,6 @@
             F1_dataGridView_CommView.CellClick += F1_dataGridView_CommView_CellClick;
             F1_dataGridView_CommView.CellContentClick += F1_dataGridView_CommView_CellContentClick;
             F1_dataGridView_CommView.RowsAdded += F1_dataGridView_CommView_RowsAdded;
-            // 
-            // TimestampMs
-            // 
-            TimestampMs.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            dataGridViewCellStyle17.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            TimestampMs.DefaultCellStyle = dataGridViewCellStyle17;
-            TimestampMs.HeaderText = "Timestamp [ms]";
-            TimestampMs.MinimumWidth = 12;
-            TimestampMs.Name = "TimestampMs";
-            TimestampMs.ReadOnly = true;
-            TimestampMs.Resizable = DataGridViewTriState.False;
-            TimestampMs.SortMode = DataGridViewColumnSortMode.NotSortable;
-            TimestampMs.Width = 248;
-            // 
-            // Direction
-            // 
-            Direction.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            dataGridViewCellStyle18.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle18.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            Direction.DefaultCellStyle = dataGridViewCellStyle18;
-            Direction.HeaderText = "Direction";
-            Direction.MinimumWidth = 12;
-            Direction.Name = "Direction";
-            Direction.ReadOnly = true;
-            Direction.Resizable = DataGridViewTriState.False;
-            Direction.SortMode = DataGridViewColumnSortMode.NotSortable;
-            Direction.Width = 185;
-            // 
-            // Type
-            // 
-            Type.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            Type.HeaderText = "Type";
-            Type.MinimumWidth = 12;
-            Type.Name = "Type";
-            Type.ReadOnly = true;
-            Type.Resizable = DataGridViewTriState.False;
-            Type.SortMode = DataGridViewColumnSortMode.NotSortable;
-            Type.Width = 95;
-            // 
-            // Payload
-            // 
-            Payload.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-            dataGridViewCellStyle19.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            Payload.DefaultCellStyle = dataGridViewCellStyle19;
-            Payload.HeaderText = "Payload";
-            Payload.MinimumWidth = 12;
-            Payload.Name = "Payload";
-            Payload.ReadOnly = true;
-            Payload.Resizable = DataGridViewTriState.False;
-            Payload.SortMode = DataGridViewColumnSortMode.NotSortable;
-            Payload.Width = 1356;
-            // 
-            // Protocol
-            // 
-            Protocol.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            dataGridViewCellStyle20.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            Protocol.DefaultCellStyle = dataGridViewCellStyle20;
-            Protocol.HeaderText = "Protocol";
-            Protocol.MinimumWidth = 12;
-            Protocol.Name = "Protocol";
-            Protocol.ReadOnly = true;
-            Protocol.Resizable = DataGridViewTriState.False;
-            Protocol.SortMode = DataGridViewColumnSortMode.NotSortable;
-            Protocol.Width = 167;
             // 
             // F1_errorProvider_BackgroundProcessError
             // 
@@ -342,6 +314,10 @@
             // 
             // F1_panel_RTT_ApplicationPanelOptions
             // 
+            F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_label_RTT_TemperatureUnitText);
+            F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_textBox_RTT_Temperature);
+            F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_label_RTT_TemperatureText);
+            F1_panel_RTT_ApplicationPanelOptions.Controls.Add(label_F1_AppName);
             F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_checkBox_RTT_PriorityCmd);
             F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_button_RTT_SendCommand);
             F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_panel_RTT_LockPanel);
@@ -351,16 +327,53 @@
             F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_panel_RTT_AddNode);
             F1_panel_RTT_ApplicationPanelOptions.Controls.Add(F1_comboBox_RTT_RequestedCommand);
             F1_panel_RTT_ApplicationPanelOptions.Enabled = false;
-            F1_panel_RTT_ApplicationPanelOptions.Location = new Point(9, 93);
+            F1_panel_RTT_ApplicationPanelOptions.Location = new Point(9, 60);
             F1_panel_RTT_ApplicationPanelOptions.Name = "F1_panel_RTT_ApplicationPanelOptions";
-            F1_panel_RTT_ApplicationPanelOptions.Size = new Size(1068, 628);
+            F1_panel_RTT_ApplicationPanelOptions.Size = new Size(1068, 996);
             F1_panel_RTT_ApplicationPanelOptions.TabIndex = 4;
             F1_panel_RTT_ApplicationPanelOptions.Visible = false;
+            // 
+            // F1_label_RTT_TemperatureUnitText
+            // 
+            F1_label_RTT_TemperatureUnitText.AutoSize = true;
+            F1_label_RTT_TemperatureUnitText.Font = new Font("Cascadia Code", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            F1_label_RTT_TemperatureUnitText.Location = new Point(570, 926);
+            F1_label_RTT_TemperatureUnitText.Name = "F1_label_RTT_TemperatureUnitText";
+            F1_label_RTT_TemperatureUnitText.Size = new Size(53, 40);
+            F1_label_RTT_TemperatureUnitText.TabIndex = 16;
+            F1_label_RTT_TemperatureUnitText.Text = "°C";
+            // 
+            // F1_textBox_RTT_Temperature
+            // 
+            F1_textBox_RTT_Temperature.Location = new Point(260, 926);
+            F1_textBox_RTT_Temperature.Name = "F1_textBox_RTT_Temperature";
+            F1_textBox_RTT_Temperature.ReadOnly = true;
+            F1_textBox_RTT_Temperature.Size = new Size(291, 42);
+            F1_textBox_RTT_Temperature.TabIndex = 15;
+            // 
+            // F1_label_RTT_TemperatureText
+            // 
+            F1_label_RTT_TemperatureText.AutoSize = true;
+            F1_label_RTT_TemperatureText.Font = new Font("Cascadia Code", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            F1_label_RTT_TemperatureText.Location = new Point(21, 926);
+            F1_label_RTT_TemperatureText.Name = "F1_label_RTT_TemperatureText";
+            F1_label_RTT_TemperatureText.Size = new Size(233, 40);
+            F1_label_RTT_TemperatureText.TabIndex = 14;
+            F1_label_RTT_TemperatureText.Text = "Temperature:";
+            // 
+            // label_F1_AppName
+            // 
+            label_F1_AppName.AutoSize = true;
+            label_F1_AppName.Location = new Point(228, 40);
+            label_F1_AppName.Name = "label_F1_AppName";
+            label_F1_AppName.Size = new Size(503, 40);
+            label_F1_AppName.TabIndex = 13;
+            label_F1_AppName.Text = "Real Time Temperature [RTT]";
             // 
             // F1_checkBox_RTT_PriorityCmd
             // 
             F1_checkBox_RTT_PriorityCmd.AutoSize = true;
-            F1_checkBox_RTT_PriorityCmd.Location = new Point(21, 56);
+            F1_checkBox_RTT_PriorityCmd.Location = new Point(21, 210);
             F1_checkBox_RTT_PriorityCmd.Name = "F1_checkBox_RTT_PriorityCmd";
             F1_checkBox_RTT_PriorityCmd.Size = new Size(343, 44);
             F1_checkBox_RTT_PriorityCmd.TabIndex = 12;
@@ -370,7 +383,7 @@
             // F1_button_RTT_SendCommand
             // 
             F1_button_RTT_SendCommand.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            F1_button_RTT_SendCommand.Location = new Point(661, 6);
+            F1_button_RTT_SendCommand.Location = new Point(661, 155);
             F1_button_RTT_SendCommand.Name = "F1_button_RTT_SendCommand";
             F1_button_RTT_SendCommand.Size = new Size(162, 49);
             F1_button_RTT_SendCommand.TabIndex = 8;
@@ -385,7 +398,7 @@
             F1_panel_RTT_LockPanel.Controls.Add(F1_label_RTT_CommandLock_LockKeyLabel);
             F1_panel_RTT_LockPanel.Controls.Add(F1_textBox_RTT_CommandLock_LockKey);
             F1_panel_RTT_LockPanel.Enabled = false;
-            F1_panel_RTT_LockPanel.Location = new Point(21, 494);
+            F1_panel_RTT_LockPanel.Location = new Point(21, 691);
             F1_panel_RTT_LockPanel.Name = "F1_panel_RTT_LockPanel";
             F1_panel_RTT_LockPanel.Size = new Size(1031, 117);
             F1_panel_RTT_LockPanel.TabIndex = 11;
@@ -432,7 +445,7 @@
             F1_panel_RTT_ChangePowerLevelPanel.Controls.Add(F1_comboBox_RTT_CommandChangePowerLevel_PowerLevel);
             F1_panel_RTT_ChangePowerLevelPanel.Controls.Add(F1_label_RTT_CommandChangePowerLevel_PowerLevelLabel);
             F1_panel_RTT_ChangePowerLevelPanel.Enabled = false;
-            F1_panel_RTT_ChangePowerLevelPanel.Location = new Point(21, 371);
+            F1_panel_RTT_ChangePowerLevelPanel.Location = new Point(21, 556);
             F1_panel_RTT_ChangePowerLevelPanel.Name = "F1_panel_RTT_ChangePowerLevelPanel";
             F1_panel_RTT_ChangePowerLevelPanel.Size = new Size(1031, 117);
             F1_panel_RTT_ChangePowerLevelPanel.TabIndex = 10;
@@ -462,7 +475,7 @@
             F1_panel_RTT_SetModePanel.Controls.Add(F1_comboBox_RTT_CommandSetMode_Mode);
             F1_panel_RTT_SetModePanel.Controls.Add(F1_label_RTT_CommandSetMode_ModeLabel);
             F1_panel_RTT_SetModePanel.Enabled = false;
-            F1_panel_RTT_SetModePanel.Location = new Point(21, 248);
+            F1_panel_RTT_SetModePanel.Location = new Point(21, 420);
             F1_panel_RTT_SetModePanel.Name = "F1_panel_RTT_SetModePanel";
             F1_panel_RTT_SetModePanel.Size = new Size(1031, 117);
             F1_panel_RTT_SetModePanel.TabIndex = 9;
@@ -491,7 +504,7 @@
             // 
             F1_label_RTT_RequestedCommandLabel.AutoSize = true;
             F1_label_RTT_RequestedCommandLabel.Font = new Font("Cascadia Code", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            F1_label_RTT_RequestedCommandLabel.Location = new Point(21, 6);
+            F1_label_RTT_RequestedCommandLabel.Location = new Point(21, 155);
             F1_label_RTT_RequestedCommandLabel.Name = "F1_label_RTT_RequestedCommandLabel";
             F1_label_RTT_RequestedCommandLabel.Size = new Size(143, 40);
             F1_label_RTT_RequestedCommandLabel.TabIndex = 5;
@@ -502,7 +515,7 @@
             F1_panel_RTT_AddNode.Controls.Add(label_RTT_CommandAddNode_IpAddressLabel);
             F1_panel_RTT_AddNode.Controls.Add(textBox_RTT_CommandAddNode_IpAddress);
             F1_panel_RTT_AddNode.Enabled = false;
-            F1_panel_RTT_AddNode.Location = new Point(21, 107);
+            F1_panel_RTT_AddNode.Location = new Point(21, 274);
             F1_panel_RTT_AddNode.Name = "F1_panel_RTT_AddNode";
             F1_panel_RTT_AddNode.Size = new Size(1031, 126);
             F1_panel_RTT_AddNode.TabIndex = 6;
@@ -529,7 +542,7 @@
             // 
             F1_comboBox_RTT_RequestedCommand.DropDownStyle = ComboBoxStyle.DropDownList;
             F1_comboBox_RTT_RequestedCommand.FormattingEnabled = true;
-            F1_comboBox_RTT_RequestedCommand.Location = new Point(234, 3);
+            F1_comboBox_RTT_RequestedCommand.Location = new Point(234, 152);
             F1_comboBox_RTT_RequestedCommand.Name = "F1_comboBox_RTT_RequestedCommand";
             F1_comboBox_RTT_RequestedCommand.Size = new Size(412, 48);
             F1_comboBox_RTT_RequestedCommand.TabIndex = 5;
@@ -555,35 +568,68 @@
             F1_comboBox_RequestedAppName.TabIndex = 0;
             F1_comboBox_RequestedAppName.SelectedIndexChanged += F1_comboBox_RequestedAppName_SelectedIndexChanged;
             // 
-            // F1_button_ResetConnectionToResource
+            // TimestampMs
             // 
-            F1_errorProvider_BackgroundProcessError.SetIconAlignment(F1_button_ResetConnectionToResource, ErrorIconAlignment.MiddleLeft);
-            F1_errorProvider_InputValidation.SetIconAlignment(F1_button_ResetConnectionToResource, ErrorIconAlignment.MiddleLeft);
-            F1_button_ResetConnectionToResource.Location = new Point(936, 80);
-            F1_button_ResetConnectionToResource.Name = "F1_button_ResetConnectionToResource";
-            F1_button_ResetConnectionToResource.Size = new Size(332, 49);
-            F1_button_ResetConnectionToResource.TabIndex = 13;
-            F1_button_ResetConnectionToResource.Text = "Reset Connection";
-            F1_button_ResetConnectionToResource.UseVisualStyleBackColor = true;
-            F1_button_ResetConnectionToResource.Click += F1_button_ResetConnectionToResource_Click;
+            dataGridViewCellStyle1.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            TimestampMs.DefaultCellStyle = dataGridViewCellStyle1;
+            TimestampMs.HeaderText = "Timestamp [ms]";
+            TimestampMs.MinimumWidth = 12;
+            TimestampMs.Name = "TimestampMs";
+            TimestampMs.ReadOnly = true;
+            TimestampMs.Resizable = DataGridViewTriState.True;
+            TimestampMs.SortMode = DataGridViewColumnSortMode.NotSortable;
+            TimestampMs.Width = 248;
             // 
-            // F1_button_SearchBytes
+            // Direction
             // 
-            F1_button_SearchBytes.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            F1_button_SearchBytes.Location = new Point(1863, 3);
-            F1_button_SearchBytes.Name = "F1_button_SearchBytes";
-            F1_button_SearchBytes.Size = new Size(188, 54);
-            F1_button_SearchBytes.TabIndex = 6;
-            F1_button_SearchBytes.Text = "Search";
-            F1_button_SearchBytes.UseVisualStyleBackColor = true;
-            F1_button_SearchBytes.Click += F1_button_SearchBytes_Click;
+            Direction.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Direction.DefaultCellStyle = dataGridViewCellStyle2;
+            Direction.HeaderText = "Direction";
+            Direction.MinimumWidth = 12;
+            Direction.Name = "Direction";
+            Direction.ReadOnly = true;
+            Direction.Resizable = DataGridViewTriState.True;
+            Direction.SortMode = DataGridViewColumnSortMode.NotSortable;
+            Direction.Width = 185;
             // 
-            // F1_textBox_SearchTextBox
+            // Type
             // 
-            F1_textBox_SearchTextBox.Location = new Point(1714, 80);
-            F1_textBox_SearchTextBox.Name = "F1_textBox_SearchTextBox";
-            F1_textBox_SearchTextBox.Size = new Size(333, 42);
-            F1_textBox_SearchTextBox.TabIndex = 6;
+            Type.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            Type.HeaderText = "Type";
+            Type.MinimumWidth = 12;
+            Type.Name = "Type";
+            Type.ReadOnly = true;
+            Type.Resizable = DataGridViewTriState.True;
+            Type.SortMode = DataGridViewColumnSortMode.NotSortable;
+            Type.Width = 95;
+            // 
+            // Payload
+            // 
+            Payload.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            dataGridViewCellStyle3.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Payload.DefaultCellStyle = dataGridViewCellStyle3;
+            Payload.HeaderText = "Payload";
+            Payload.MinimumWidth = 12;
+            Payload.Name = "Payload";
+            Payload.ReadOnly = true;
+            Payload.Resizable = DataGridViewTriState.True;
+            Payload.SortMode = DataGridViewColumnSortMode.NotSortable;
+            Payload.Width = 1356;
+            // 
+            // Protocol
+            // 
+            Protocol.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            dataGridViewCellStyle4.Font = new Font("Cascadia Mono", 8.1F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Protocol.DefaultCellStyle = dataGridViewCellStyle4;
+            Protocol.HeaderText = "Protocol";
+            Protocol.MinimumWidth = 12;
+            Protocol.Name = "Protocol";
+            Protocol.ReadOnly = true;
+            Protocol.Resizable = DataGridViewTriState.True;
+            Protocol.SortMode = DataGridViewColumnSortMode.NotSortable;
+            Protocol.Width = 167;
             // 
             // F1_CommunicationMainForm
             // 
@@ -644,11 +690,6 @@
         private ToolTip F1_toolTip_ToolTip;
         private ErrorProvider F1_errorProvider_BackgroundProcessError;
         private System.Windows.Forms.Timer F1_timer_PeriodicUpdate;
-        private DataGridViewTextBoxColumn TimestampMs;
-        private DataGridViewTextBoxColumn Direction;
-        private DataGridViewTextBoxColumn Type;
-        private DataGridViewTextBoxColumn Payload;
-        private DataGridViewTextBoxColumn Protocol;
         private Panel F1_panel_ApplicationPanel;
         private Label F1_label_RequestedAppNameLabel;
         private ComboBox F1_comboBox_RequestedAppName;
@@ -674,5 +715,14 @@
         private Button F1_button_ResetConnectionToResource;
         private Button F1_button_SearchBytes;
         private TextBox F1_textBox_SearchTextBox;
+        private Label label_F1_AppName;
+        private TextBox F1_textBox_RTT_Temperature;
+        private Label F1_label_RTT_TemperatureText;
+        private Label F1_label_RTT_TemperatureUnitText;
+        private DataGridViewTextBoxColumn TimestampMs;
+        private DataGridViewTextBoxColumn Direction;
+        private DataGridViewTextBoxColumn Type;
+        private DataGridViewTextBoxColumn Payload;
+        private DataGridViewTextBoxColumn Protocol;
     }
 }

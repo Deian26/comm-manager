@@ -79,13 +79,11 @@ namespace Communication_Manager
         /// </summary>
         /// <param name="data">full telegram</param>
         /// <param name="telegramType">telegram type (RTT.TELEGRAM_TYPE_CMD or RTT.TELEGRAM_TYPE_RESP)</param>
-        /// <param name="negativeResp">true if the telegram is a negative response</param>
         /// <returns>telegram interpretation</returns>
-        public static TreeNode InterpretTelegram(byte[] data, out string telegramType, out bool negativeResp)
+        public static TreeNode InterpretTelegram(byte[] data, out string telegramType)
         {
             TreeNode info = new TreeNode();
             telegramType = "?";
-            negativeResp = false;
 
             // check length
             if (data.Length < 1)
@@ -102,7 +100,7 @@ namespace Communication_Manager
             }else // response
             {
                 telegramType = RTT.TELEGRAM_TYPE_RESP;
-                info = RTT.InterpretRespTelegramPayload(data.Skip(2).ToArray(), out negativeResp);
+                info = RTT.InterpretRespTelegramPayload(data.Skip(2).ToArray());
             }
 
             info.Text = "Interpretation";
@@ -126,7 +124,7 @@ namespace Communication_Manager
 
             // get Command ID
             byte cmdID = data[0];
-            string hexCmdId = Utility.getHexString(cmdID, true); // get command ID as a hex-string
+            string hexCmdId = Utility.getHexString(cmdID); // get command ID as a hex-string
 
             switch (cmdID)
             {
@@ -299,12 +297,10 @@ namespace Communication_Manager
         /// Interprets the given RTT response telegram payload and returns data about it as a TreeNode
         /// </summary>
         /// <param name="data">payload telegram bytes (without TP encapsulation) to be interpreted</param>
-        /// <param name="negativeResp">true if the response is negative</param>
         /// <returns>data extracted from the telegram payload that was provided</returns>
-        public static TreeNode InterpretRespTelegramPayload(byte[] data, out bool negativeResp)
+        public static TreeNode InterpretRespTelegramPayload(byte[] data)
         {
             TreeNode info = new TreeNode();
-            negativeResp = false;
 
             if (data.Length < RTT.SIMPLE_RESP_LEN) // invalid length
             {
@@ -320,53 +316,54 @@ namespace Communication_Manager
 
 
             // display code
-            info.Nodes.Add("Response", $"Response code: {RTT.getResponseCodeText(data[2], out negativeResp)} (0x{Utility.getHexString(data[2], true)})");
+            bool negativeResp = false;
+            info.Nodes.Add("Response", $"Response code: {RTT.getResponseCodeText(data[2], out negativeResp)} (0x{Utility.getHexString(data[2])})");
 
             // set response code interpretation background colour
-            if(negativeResp == true)
+            if(negativeResp == true) // negative response
             {
                 info.Nodes["Response"].BackColor = Color.Salmon;
             }
-            else
+            else // positive response
             {
                 info.Nodes["Response"].BackColor = Color.LimeGreen;
-            }
+            } // else => leave the default cell background colour
 
             switch (cmdID)
             {
                 case RTT.CMD_PING:
                     {
-                        info.Nodes.Add("Response", $"Response for: Ping (0x{Utility.getHexString(RTT.CMD_PING, true)})");
+                        info.Nodes.Add("Response", $"Response for: Ping (0x{Utility.getHexString(RTT.CMD_PING)})");
                         break;
                     }
 
                 case RTT.CMD_ADD_NODE:
                     {
-                        info.Nodes.Add("Response", $"Response for: Add Node (0x{Utility.getHexString(RTT.CMD_ADD_NODE, true)})");
+                        info.Nodes.Add("Response", $"Response for: Add Node (0x{Utility.getHexString(RTT.CMD_ADD_NODE)})");
                         break;
                     }
 
                 case RTT.CMD_RESET:
                     {
-                        info.Nodes.Add("Response", $"Response for: Reset (0x{Utility.getHexString(RTT.CMD_RESET, true)})");
+                        info.Nodes.Add("Response", $"Response for: Reset (0x{Utility.getHexString(RTT.CMD_RESET)})");
                         break;
                     }
 
                 case RTT.CMD_TX_DATA:
                     {
-                        info.Nodes.Add("Response", $"Response for: Transmit Data (0x{Utility.getHexString(RTT.CMD_TX_DATA, true)})");
+                        info.Nodes.Add("Response", $"Response for: Transmit Data (0x{Utility.getHexString(RTT.CMD_TX_DATA)})");
                         break;
                     }
 
                 case RTT.CMD_SET_MODE:
                     {
-                        info.Nodes.Add("Response", $"Response for: Set Mode (0x{Utility.getHexString(RTT.CMD_SET_MODE, true)})");
+                        info.Nodes.Add("Response", $"Response for: Set Mode (0x{Utility.getHexString(RTT.CMD_SET_MODE)})");
                         break;
                     }
 
                 case RTT.CMD_CHANGE_POWER_LEVEL:
                     {
-                        info.Nodes.Add("Response", $"Response for: Change Power Level (0x{Utility.getHexString(RTT.CMD_CHANGE_POWER_LEVEL, true)})");
+                        info.Nodes.Add("Response", $"Response for: Change Power Level (0x{Utility.getHexString(RTT.CMD_CHANGE_POWER_LEVEL)})");
                         break;
                     }
 
@@ -375,7 +372,7 @@ namespace Communication_Manager
 
                         string[] asciiInfo = System.Text.Encoding.ASCII.GetString(data.Skip(3).ToArray()).Split(";");
 
-                        info.Nodes.Add("Response", $"Response for: Get Info (0x{Utility.getHexString(RTT.CMD_GET_INFO, true)})");
+                        info.Nodes.Add("Response", $"Response for: Get Info (0x{Utility.getHexString(RTT.CMD_GET_INFO)})");
                         info.Nodes.Add("Response ASCII version", $"[ASCII] Version: {asciiInfo[0].Trim()}");
                         info.Nodes.Add("Response ASCII UTC Build time", $"[ASCII] UTC Build time: {asciiInfo[1].Trim()}");
                         break;
@@ -383,13 +380,13 @@ namespace Communication_Manager
 
                 case RTT.CMD_SHUTDOWN:
                     {
-                        info.Nodes.Add("Response", $"Response for: Shutdown (0x{Utility.getHexString(RTT.CMD_SHUTDOWN, true)})");
+                        info.Nodes.Add("Response", $"Response for: Shutdown (0x{Utility.getHexString(RTT.CMD_SHUTDOWN)})");
                         break;
                     }
 
                 case RTT.CMD_LOCK:
                     {
-                        info.Nodes.Add("Response", $"Response for: Lock (0x{Utility.getHexString(RTT.CMD_LOCK, true)})");
+                        info.Nodes.Add("Response", $"Response for: Lock (0x{Utility.getHexString(RTT.CMD_LOCK)})");
                         break;
                     }
 
@@ -410,12 +407,15 @@ namespace Communication_Manager
                             // decode temperature
                             tempCelsius = BitConverter.ToSingle(tempBytes,0);// the value is converted from float before being sent (on the board)
 
-                            info.Nodes.Add("Response", $"Periodic temperature transmission response (response code 0x{Utility.getHexString(cmdID, true)})");
-                            info.Nodes.Add("Response", $"Temperature: {tempCelsius} °C");
+                            info.Nodes.Add("Response", $"Periodic temperature transmission response (response code 0x{Utility.getHexString(cmdID)})");
+                            info.Nodes.Add("Response - Temperature", $"Temperature: {tempCelsius} °C");
+                            // store raw temperature value (for further processing
+                            info.Nodes.Add("Response - Temperature raw", $"{tempCelsius}");
+
                         }
                         else // unknown command
                         {
-                            info.Nodes.Add("ERROR", $"Unknown command for which the response was sent: 0x{Utility.getHexString(cmdID, true)}");
+                            info.Nodes.Add("ERROR", $"Unknown command for which the response was sent: 0x{Utility.getHexString(cmdID)}");
                         }
 
                         break;

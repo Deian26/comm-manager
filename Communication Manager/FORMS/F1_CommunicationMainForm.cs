@@ -29,10 +29,11 @@ namespace Communication_Manager
             InitializeComponent();
             this.MaximumSize = this.MinimumSize = this.Size;
 
-            // disable communication row editing
+            // disable communication row additions / deletions, but allow column resizing
             this.F1_dataGridView_CommView.AllowUserToAddRows = false;
             this.F1_dataGridView_CommView.AllowUserToDeleteRows = false;
             this.F1_dataGridView_CommView.AllowUserToResizeRows = false;
+            this.F1_dataGridView_CommView.AllowUserToResizeColumns = true;
 
             // start update timer
             this.F1_timer_PeriodicUpdate.Interval = UPDATE_TIMER_MS;
@@ -221,10 +222,12 @@ namespace Communication_Manager
                     }
 
 
-                    // send data
-                    string errMsgs = "";
+                    if (this.F1_comboBox_Resources.SelectedItem.ToString().StartsWith("SIM-") == false) // real resource
+                    {
+                        // send data
+                        string errMsgs = "";
 
-                    int errorCode = SerialCommunication.SendData(
+                        int errorCode = SerialCommunication.SendData(
                             this.F1_textBox_RawDataToBeSent.Text,
                             this.F1_comboBox_Resources.SelectedItem.ToString(),
                             Int32.Parse(this.F1_comboBox_BaudRate.SelectedItem.ToString()),
@@ -232,30 +235,31 @@ namespace Communication_Manager
                         );
 
 
-                    if (errorCode == -1) // error port closed
-                    {
-                        errMsgs += " [ERROR: PORT CLOSED] ";
-                        this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_comboBox_Resources, "Port closed unexpectedly!");
-                    }
-                    else if (errorCode == -2) // error 
-                    {
-                        errMsgs += " [ERROR: SENDING DATA] ";
-                    }
-                    else if (errorCode == -3) // general error
-                    {
-                        errMsgs += " [ERROR GENERAL TRANSMISSION ERROR]";
-                    }
+                        if (errorCode == -1) // error port closed
+                        {
+                            errMsgs += " [ERROR: PORT CLOSED] ";
+                            this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_comboBox_Resources, "Port closed unexpectedly!");
+                        }
+                        else if (errorCode == -2) // error 
+                        {
+                            errMsgs += " [ERROR: SENDING DATA] ";
+                        }
+                        else if (errorCode == -3) // general error
+                        {
+                            errMsgs += " [ERROR GENERAL TRANSMISSION ERROR]";
+                        }
 
+                        if (errMsgs != "") // log error
+                        {
+                            Logging.Log(errMsgs, Logging.Level.ERROR);
+                            this.F1_errorProvider_InputValidation.SetError(this.F1_button_SendPacket, $"ERROR Sending value! Details: {errMsgs}"); // display error
+                        }
 
-                    if (errMsgs != "") // log error
-                    {
-                        Logging.Log(errMsgs, Logging.Level.ERROR);
-                        this.F1_errorProvider_InputValidation.SetError(this.F1_button_SendPacket, $"ERROR Sending value! Details: {errMsgs}"); // display error
                     }
-
-                    // log data in the GUI
+                    
+                    // log data in the GUI (for real and simulated resources)
                     this.storeTelegram(
-                            Utility.GetBytesFromHexString(this.F1_textBox_RawDataToBeSent.Text),
+                            Utility.getBytesFromHexString(this.F1_textBox_RawDataToBeSent.Text),
                             SerialCommunication.Direction.Transmit,
                             "?", // init; will be changed later
                             this.F1_comboBox_Protocols.SelectedItem.ToString()
@@ -264,7 +268,7 @@ namespace Communication_Manager
                     // log data to Logging.SERIAL_COMM_LOG, if logging is enabled
                     if (this.F1_checkBox_LogTransmission.Checked == true)
                     {
-                        Logging.LogData(this.F1_textBox_RawDataToBeSent.Text, SerialCommunication.Direction.Transmit); // log data
+                        Logging.LogData(Convert.FromHexString(this.F1_textBox_RawDataToBeSent.Text), SerialCommunication.Direction.Transmit); // log data
                     }
 
                 }
@@ -327,25 +331,51 @@ namespace Communication_Manager
                 try
                 {
                     string telegramType = "?";
-                    int negativeResp;
 
-                    info = Utility.InterpretTelegram(
-                            this.F1_comboBox_Protocols.SelectedItem.ToString(),
-                            this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["Payload"].Value.ToString(),
-                            (double)this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["TimestampMs"].Value,
-                            out telegramType,
-                            out negativeResp // 1 if the telegram is a negative response, 0 if it is a positive response; only useful for applications that implement negative responses (in those cases, the value is '2')
-                        );
-
-                    // change background colour in the grid view
-                    if(negativeResp == 1) // negative response
+                    switch (this.F1_comboBox_Protocols.SelectedItem.ToString())
                     {
-                        this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["Type"].Style.BackColor = Color.Salmon;
+                        case "BDTP":
+                            {
+                                // app
+                                switch (this.F1_comboBox_RequestedAppName.SelectedItem.ToString())
+                                {
+                                    case "RTT":
+                                        {
+                                            info = RTT.InterpretTelegram(
+                                                Convert.FromHexString(this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["Payload"].Value.ToString().Replace(" ","")),
+                                                out telegramType
+                                            );
+
+                                            // display temperature in the app panel
+                                            if (info.Nodes.ContainsKey("Response - Temperature raw"))
+                                            {
+                                                this.F1_textBox_RTT_Temperature.Text = info.Nodes["Response - Temperature raw"].Text;
+                                            }
+                                            else // missing temperature
+                                            {
+                                                this.F1_textBox_RTT_Temperature.Text = "ERROR";
+                                                errors.Nodes.Add("ERROR", $"Missing temperature for application: {this.F1_comboBox_RequestedAppName.SelectedItem.ToString()}!"); // store error
+                                            }
+
+                                            break;
+                                        }
+
+                                    default: // unrecognized app
+                                        {
+                                            errors.Nodes.Add("ERROR", $"Unrecognized application: {this.F1_comboBox_RequestedAppName.SelectedItem.ToString()}!"); // store error
+                                            break;
+                                        }
+
+                                }
+
+                                break;
+                            }
+
+                        default: // unrecognized protocol
+                            {
+                                break;
+                            }
                     }
-                    else if(negativeResp == 0) // positive response
-                    {
-                        this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["Type"].Style.BackColor = Color.LimeGreen;
-                    }// otherwise do not change the background colour
 
                     // set telegram type
                     this.F1_dataGridView_CommView.Rows[e.RowIndex].Cells["Type"].Value = telegramType;
@@ -353,7 +383,7 @@ namespace Communication_Manager
                 catch (Exception ex)
                 {
                     // exception will be thrown later
-                    errors.Nodes.Add("ERROR", "Could not interpret telegram!"); // store error
+                    errors.Nodes.Add("ERROR", $"Could not interpret telegram! Details: {ex.Message}"); // store error
                 }
 
 
@@ -431,7 +461,7 @@ namespace Communication_Manager
                 DateTime.Now.Subtract(Logging.START_SERIAL_COMM_TS_MS).TotalMilliseconds, //ms
                 SerialCommunication.DirectionStr[(int)direction],
                 telegramType,
-                Utility.getHexString(dataBytes, true).ToUpper(),
+                Utility.getFormattedHexString(dataBytes),
                 protocol
                 );
 
@@ -574,7 +604,7 @@ namespace Communication_Manager
 
                             // get lock key
                             errMsg = null;
-                            byte[] lockKey = Utility.getBytesFromHexString(this.F1_textBox_RTT_CommandLock_LockKey.Text, out errMsg);
+                            byte[] lockKey = Utility.getBytesFromHexString(this.F1_textBox_RTT_CommandLock_LockKey.Text);
 
                             if (errMsg != "" && errMsg != "")
                             {
@@ -613,7 +643,7 @@ namespace Communication_Manager
             command[1] = (byte)(command.Count - 2);
 
             // send command
-            string commandHexStr = Utility.getHexString(command.ToArray(), true);
+            string commandHexStr = Utility.getHexString(command.ToArray());
 
             this.F1_textBox_RawDataToBeSent.Text = commandHexStr;
             this.F1_button_SendPacket.PerformClick();
@@ -744,13 +774,51 @@ namespace Communication_Manager
                 if (SerialCommunication.CrtPort.IsOpen == true)
                 {
                     this.F1_errorProvider_BackgroundProcessError.Clear();
-                }    
+                }
 
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 string errMsg = $"ERROR Resetting resource {SerialCommunication.CrtPort.PortName}! Details: {ex.Message}";
                 Logging.Log(errMsg, Logging.Level.ERROR);
                 this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_button_ResetConnectionToResource, errMsg);
+            }
+        }
+
+        private void F1_comboBox_Resources_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                // open serial connection, if real
+                if (this.F1_comboBox_Resources.SelectedItem.ToString().StartsWith("SIM-") == false)
+                {
+                    SerialCommunication.CrtPort = SerialCommunication.Resources[this.F1_comboBox_Resources.SelectedItem.ToString()]; // set current port
+                    SerialCommunication.CrtPort.BaudRate = Convert.ToInt32(this.F1_comboBox_BaudRate.SelectedItem.ToString());
+                    
+                    if (SerialCommunication.CrtPort.IsOpen == true) // if open, close it first
+                        SerialCommunication.CrtPort.Close();
+
+                    SerialCommunication.CrtPort.Open();
+
+                    // send data
+                    int writeErrCode = SerialCommunication.Write([]); // send an empty byte array to open the connection
+
+                    if (writeErrCode == -1)
+                    {
+                        this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_comboBox_Resources, $"ERROR: Resource {this.F1_comboBox_Resources.SelectedItem.ToString()} closed!");
+                    }
+                    else if (writeErrCode == -2)
+                    {
+                        this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_comboBox_Resources, $"ERROR: Could not open the connection to resource {this.F1_comboBox_Resources.SelectedItem.ToString()}!");
+                    }
+
+                    // clear buffer
+                    SerialCommunication.CrtPort.DiscardOutBuffer();
+                }
+            }
+            catch (Exception ex)
+            {
+                this.F1_errorProvider_BackgroundProcessError.SetError(this.F1_comboBox_Resources, $"ERROR: Could not configure and open resource {this.F1_comboBox_Resources.SelectedItem.ToString()}! Details {ex.Message}");
             }
         }
     }

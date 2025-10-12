@@ -15,51 +15,34 @@ namespace Communication_Manager
     /// </summary>
     static class Utility
     {
-        #region conversion-tables
-        public static string[] HexDigit2BinStr = { // binary string values for the hex digits; the index of this array represents the hex digit (e.g., the binary string for 0x0F is stored at [15])
-            "0000", // 0x00
-            "0001", // 0x01
-            "0010", // 0x02
-            "0011", // 0x03
-            "0100", // 0x04
-            "0101", // 0x05
-            "0110", // 0x06
-            "0111", // 0x07
-            "1000", // 0x08
-            "1001", // 0x09
-            "1010", // 0x0A
-            "1011", // 0x0B
-            "1100", // 0x0C
-            "1101", // 0x0D
-            "1110", // 0x0E
-            "1111" // 0x0F
-            };
-
-        public static string[] Int2HexDigit = { // contains values for converting integers into hex digit strings; the index of the array corresponds to the int value to be converted
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
-            "F"
-        };
-        #endregion
-
         #region configuration
         public const int LOADING_FORM_APP_START_DELAY_MS = 2000; // ms to wait after initializing the application, before form F0 is hidden and form F1 is opened
         public static string CONFIG_FOLDER_PATH = @$"{Directory.GetCurrentDirectory()}\..\..\..\UTILITY\RESOURCES\COMM_DEF\"; // local configuration files folder path
         public const string HEX_DIGTIS = "0123456789ABCDEF";
-        
+        #endregion
+
+        #region lookup-tables
+        private static Dictionary<byte, string> BYTE_TO_HEX_DIGIT_STR_TABLE = new Dictionary<byte, string>()
+        {
+            { 0x00, "0" },
+            { 0x01, "1" },
+            { 0x02, "2" },
+            { 0x03, "3" },
+            { 0x04, "4" },
+            { 0x05, "5" },
+            { 0x06, "6" },
+            { 0x07, "7" },
+            { 0x08, "8" },
+            { 0x09, "9" },
+            { 0x0A, "A" },
+            { 0x0B, "B" },
+            { 0x0C, "C" },
+            { 0x0D, "D" },
+            { 0x0E, "E" },
+            { 0x0F, "F" }
+        };
+
+        #endregion
 
         /// <summary>
         /// Load protocol definition files from the specified folder.
@@ -416,7 +399,60 @@ namespace Communication_Manager
                 }
             }
         }
-        #endregion
+
+        /// <summary>
+        /// Convert a hex-string to a byte array
+        /// </summary>
+        /// <param name="hexString">string to be converted</param>
+        /// <returns>converted byte array</returns>
+        public static byte[] getBytesFromHexString(string hexString)
+        {
+            return Convert.FromHexString( hexString );
+        }
+
+
+        /// <summary>
+        /// Convert the given byte to a hex-string
+        /// </summary>
+        /// <param name="_byte">byte to be converted</param>
+        /// <returns>converted hex-string</returns>
+        public static string getHexString(byte _byte)
+        {
+            // create byte array
+            byte[] bytes = new byte[1] { _byte };
+
+            return Convert.ToHexString( bytes ).ToUpper();
+        }
+
+        /// <summary>
+        /// Converts the given byte array into a hex-string
+        /// </summary>
+        /// <param name="bytes">bytes to be converted</param>
+        /// <returns>hex-string</returns>
+        public static string getHexString(byte[] bytes)
+        {
+            return Convert.ToHexString( bytes ).ToUpper();
+        }
+
+        /// <summary>
+        /// Converts the given byte array into a hex-string including byte separators (spaces)
+        /// </summary>
+        /// <param name="bytes">bytes to be converted</param>
+        /// <returns>hex-string</returns>
+        public static string getFormattedHexString(byte[] bytes)
+        {
+            string formattedByteStr = "";
+
+            foreach(byte _byte in bytes)
+            {
+                formattedByteStr += $"{BYTE_TO_HEX_DIGIT_STR_TABLE[(byte)((_byte & 0xF0) >> 4)]}{BYTE_TO_HEX_DIGIT_STR_TABLE[(byte)(_byte & 0x0F)]} "; // get hex digit string
+            }
+
+            // delete last space
+            formattedByteStr.TrimEnd();
+
+            return formattedByteStr;
+        }
 
         #region formatting
         /// <summary>
